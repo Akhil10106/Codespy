@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeSphere AI - Professional DSA Platform</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Monaco Editor CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide-react@0.378.0/dist/lucide-react.js"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --font-sans: 'Poppins', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --bg-light: #f8fafc;
+            --panel-light: #ffffff;
+            --border-light: #e2e8f0;
+            --text-light: #0f172a;
+            --text-secondary-light: #475569;
+            --accent-light: #4f46e5;
+            --accent-hover-light: #4338ca;
+
+            --bg-dark: #000000;
+            --panel-dark: #111111;
+            --border-dark: #222222;
+            --text-dark: #e2e8f0;
+            --text-secondary-dark: #94a3b8;
+            --accent-dark: #cccccc;
+            --accent-hover-dark: #ffffff;
+        }
+
+        [data-theme="light"] {
+            --bg: var(--bg-light); --panel: var(--panel-light); --border: var(--border-light);
+            --text-primary: var(--text-light); --text-secondary: var(--text-secondary-light);
+            --accent: var(--accent-light); --accent-hover: var(--accent-hover-light);
+        }
+
+        [data-theme="dark"] {
+            --bg: var(--bg-dark); --panel: var(--panel-dark); --border: var(--border-dark);
+            --text-primary: var(--text-dark); --text-secondary: var(--text-secondary-dark);
+            --accent: var(--accent-dark); --accent-hover: var(--accent-hover-dark);
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .tab.active { border-bottom-color: var(--accent); color: var(--accent); }
+        .problem-card:hover { border-left-color: var(--accent); background-color: color-mix(in srgb, var(--panel) 90%, var(--bg)); }
+        .problem-card.active {
+            background-color: color-mix(in srgb, var(--accent) 10%, var(--panel));
+            border-left-color: var(--accent);
+        }
+        .btn-primary { background-color: var(--accent); color: white; }
+        .btn-primary:hover { background-color: var(--accent-hover); }
+        [data-theme="dark"] .btn-primary { color: #000; }
+
+
+        .prose { color: var(--text-secondary); }
+        .prose h3 { color: var(--text-primary); margin-top: 1.5em; margin-bottom: 0.5em;}
+        .prose p { margin-bottom: 1em; line-height: 1.6; }
+        .prose code { background-color: var(--border); color: var(--text-primary); padding: 2px 6px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; }
+        .prose pre { background-color: var(--bg); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; }
+        .prose pre code { background-color: transparent; padding: 0; }
+        .prose ul, .prose ol { list-style-position: inside; padding-left: 1em; }
+        .prose ul { list-style-type: disc; }
+        .prose ol { list-style-type: decimal; }
+        .prose li { margin-bottom: 0.5em; }
+
+        /* For Monaco Editor Placeholder */
+        .monaco-placeholder {
+            position: absolute;
+            top: 5px;
+            left: 56px;
+            color: #9ca3af;
+            pointer-events: none;
+            font-family: var(--font-mono);
+            font-size: 14px;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px;}
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        ::-webkit-scrollbar-button { display: none; }
+        
+        #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; pointer-events: none; }
+    
+        .resizer { transition: background-color 0.2s ease; }
+        .resizer:hover, .resizer.active { background-color: var(--accent) !important; }
+        
+        .category-card {
+            border: 1px solid var(--border);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border-color: var(--accent);
+        }
+        [data-theme="dark"] .category-card:hover {
+             box-shadow: 0 10px 20px rgba(255,255,255,0.05);
+        }
+    </style>
+</head>
+
+<body data-theme="dark">
+    <canvas id="confetti-canvas"></canvas>
+    <div id="navbar" class="flex items-center justify-between p-3 border-b" style="background-color: var(--panel); border-color: var(--border);">
+        <h1 class="text-2xl font-bold flex items-center gap-2">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            CodeSphere AI
+        </h1>
+        <div class="flex items-center space-x-4">
+            <select id="language-select" class="px-3 py-1.5 rounded-md border text-sm" style="background-color: var(--bg); border-color: var(--border);">
+                <option value="javascript">JavaScript</option>
+                <option value="python">Python</option>
+                <option value="java">Java</option>
+            </select>
+            <button id="theme-toggle" class="p-2 rounded-md hover:bg-gray-500/10 transition"></button>
+        </div>
+    </div>
+    <div class="container mx-auto flex h-[calc(100vh-61px)]">
+        <!-- Home View (Category Cards) -->
+        <div id="home-view" class="w-full p-8 overflow-y-auto">
+            <h2 class="text-4xl font-bold text-center">Welcome to CodeSphere AI</h2>
+            <p class="text-center mt-2 mb-10" style="color: var(--text-secondary);">Select a category to start your coding journey</p>
+            <div id="category-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Category cards will be dynamically inserted here -->
+            </div>
+        </div>
+
+        <!-- Problem View -->
+        <div id="problem-view" class="w-full flex" style="display: none;">
+            <!-- Sidebar -->
+            <div id="sidebar" class="w-[350px] p-4 border-r flex flex-col flex-shrink-0" style="background-color: var(--panel); border-color: var(--border);">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 id="problem-set-title" class="text-lg font-semibold">Problem Set</h2>
+                    <button id="back-to-home" class="p-1.5 rounded-md hover:bg-gray-500/10 transition text-sm flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+                        Back
+                    </button>
+                </div>
+                <div class="mb-4">
+                    <input type="text" id="search-problems" placeholder="Search problems..." class="w-full px-3 py-1.5 rounded-md border text-sm" style="background-color: var(--bg); border-color: var(--border);">
+                </div>
+                <div id="problems-list" class="flex-grow overflow-y-auto pr-2"></div>
+            </div>
+            <div id="sidebar-resizer" class="resizer w-1.5 cursor-col-resize flex-shrink-0" style="background-color: var(--border);"></div>
+            
+            <!-- Main Content -->
+            <main id="main-content" class="flex-1 flex flex-col overflow-hidden" style="display: none;">
+                 <div class="flex border-b flex-shrink-0" style="border-color: var(--border);">
+                    <div class="tab active" data-tab="description">Description</div>
+                    <div class="tab" data-tab="editorial">Editorial</div>
+                    <div class="tab" data-tab="submissions">Submissions</div>
+                    <div class="tab" data-tab="profile">My Profile</div>
+                </div>
+                <div class="flex-grow flex overflow-hidden">
+                    <div id="problem-content-wrapper" class="w-1/2 flex flex-col">
+                        <div id="description-section" class="tab-content p-4 flex-grow overflow-y-auto">
+                            <h2 id="problem-title" class="text-3xl font-bold mb-4"></h2>
+                            <div id="problem-description" class="prose max-w-none"></div>
+                            <div class="mt-6">
+                                <button id="ai-hint-btn" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md border transition" style="background-color: var(--bg); border-color: var(--border);">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="m19 19-7-7 7-7"/></svg>
+                                Get AI Hint
+                                </button>
+                            </div>
+                            <div id="ai-hint-box" class="mt-4 p-4 rounded-lg prose max-w-none" style="background-color: var(--bg); display: none;"></div>
+                        </div>
+                        <div id="editorial-section" class="tab-content hidden p-4 flex-grow overflow-y-auto">
+                            <div id="editorial-content" class="prose max-w-none"></div>
+                        </div>
+                        <div id="submissions-section" class="tab-content hidden p-4 flex-grow overflow-y-auto">
+                            <h3 class="text-xl font-semibold mb-4">Your Submissions</h3>
+                            <div id="submissions-list" class="space-y-3"></div>
+                        </div>
+                    </div>
+
+                    <div id="profile-section" class="tab-content hidden p-4 flex-grow overflow-y-auto">
+                        <h3 class="text-xl font-semibold mb-4">Your Progress Dashboard</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="p-4 rounded-lg" style="background-color: var(--bg);"><h4 class="text-sm font-medium">Total Solved</h4><p id="total-solved" class="text-2xl font-bold">0</p></div>
+                            <div class="p-4 rounded-lg" style="background-color: var(--bg);"><h4 class="text-sm font-medium">Easy</h4><p id="easy-solved" class="text-2xl font-bold text-green-500">0</p></div>
+                            <div class="p-4 rounded-lg" style="background-color: var(--bg);"><h4 class="text-sm font-medium">Medium</h4><p id="medium-solved" class="text-2xl font-bold text-yellow-500">0</p></div>
+                        </div>
+                        <div class="p-4 rounded-lg" style="background-color: var(--bg);"><canvas id="progress-chart"></canvas></div>
+                    </div>
+                    
+                    <div id="content-resizer" class="resizer w-1.5 cursor-col-resize" style="background-color: var(--border);"></div>
+
+                    <div id="editor-panel" class="w-1/2 flex flex-col">
+                        <div id="editor-section" class="flex-grow flex flex-col h-[calc(100%-8rem)]">
+                            <div class="flex-grow relative">
+                                <div id="editor-container" class="h-full w-full"></div>
+                                <div class="monaco-placeholder"></div>
+                            </div>
+                            <div class="flex items-center justify-between p-2 border-t" style="border-color: var(--border);">
+                                <div class="flex items-center gap-4">
+                                     <button id="reset-btn" class="p-2 rounded-md hover:bg-gray-500/10 transition" title="Reset Code">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v6h6"/><path d="M21 12A9 9 0 0 0 6 5.3L3 8"/></svg>
+                                    </button>
+                                    <button id="run-btn" class="btn-primary px-4 py-1.5 text-sm font-semibold rounded-md flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                    Run
+                                    </button>
+                                    <button id="submit-btn" class="px-4 py-1.5 text-sm font-semibold rounded-md flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                    Submit
+                                    </button>
+                                </div>
+                                <div id="output-panel-toggle" class="cursor-pointer text-sm font-medium flex items-center gap-1">
+                                    <span>Console</span>
+                                    <svg id="output-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform"><polyline points="18 15 12 9 6 15"/></svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="output-panel" class="h-32 p-2 font-mono text-sm overflow-y-auto flex-shrink-0" style="background-color: var(--bg);"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- DATA & MOCK API ---
+        const problemSets = {
+            dsa: [
+                { 
+                    id: 1, title: "Sum of Two Integers", difficulty: "Very Easy", topic: "Array", tags: ["Math"], 
+                    description: `
+                        <p>Given two integers, <code>a</code> and <code>b</code>, return their sum.</p>
+                        <p>This is a foundational problem to ensure your environment is set up correctly and you understand the function submission format.</p>
+                        <h3>Example:</h3>
+                        <pre><code><strong>Input:</strong> a = 5, b = 3\n<strong>Output:</strong> 8</code></pre>
+                        <h3>Constraints:</h3>
+                        <ul><li><code>-1000 <= a, b <= 1000</code></li></ul>
+                    `
+                },
+                { 
+                    id: 2, title: "Find Maximum in Array", difficulty: "Very Easy", topic: "Array", tags: ["Iteration"], 
+                    description: `
+                        <p>Given an array of integers <code>nums</code>, find and return the largest element in the array.</p>
+                        <p>You will need to iterate through the array and keep track of the maximum value seen so far.</p>
+                        <h3>Example:</h3>
+                        <pre><code><strong>Input:</strong> nums = [1, 5, 2, 9, 3]\n<strong>Output:</strong> 9</code></pre>
+                        <h3>Constraints:</h3>
+                        <ul><li><code>1 <= nums.length <= 1000</code></li><li><code>-10^4 <= nums[i] <= 10^4</code></li></ul>
+                    `
+                },
+                { 
+                    id: 3, title: "Two Sum", difficulty: "Easy", topic: "Array", tags: ["Hash Table"], 
+                    description: `
+                        <p>Given an array of integers <code>nums</code> and an integer <code>target</code>, return indices of the two numbers such that they add up to <code>target</code>.</p>
+                        <p>You may assume that each input would have <strong>exactly one solution</strong>, and you may not use the same element twice. The answer can be returned in any order.</p>
+                        <h3>Example:</h3>
+                        <pre><code><strong>Input:</strong> nums = [2, 7, 11, 15], target = 9\n<strong>Output:</strong> [0, 1]\n<strong>Explanation:</strong> Because nums[0] + nums[1] == 9, we return [0, 1].</code></pre>
+                        <h3>Constraints:</h3>
+                        <ul>
+                            <li><code>2 &lt;= nums.length &lt;= 10^4</code></li>
+                            <li><code>-10^9 &lt;= nums[i] &lt;= 10^9</code></li>
+                            <li><code>-10^9 &lt;= target &lt;= 10^9</code></li>
+                            <li>Only one valid answer exists.</li>
+                        </ul>
+                    ` 
+                },
+                { 
+                    id: 4, title: "Reverse Linked List", difficulty: "Easy", topic: "Linked List", tags: ["Iteration"], 
+                    description: `
+                        <p>Given the <code>head</code> of a singly linked list, reverse the list, and return <em>the new head of the reversed list</em>.</p>
+                        <p>A linked list can be reversed either iteratively or recursively. Try to solve it both ways!</p>
+                        <h3>Example:</h3>
+                        <pre><code><strong>Input:</strong> head = [1,2,3,4,5]\n<strong>Output:</strong> [5,4,3,2,1]</code></pre>
+                        <h3>Constraints:</h3>
+                        <ul>
+                            <li>The number of nodes in the list is in the range <code>[0, 5000]</code>.</li>
+                            <li><code>-5000 &lt;= Node.val &lt;= 5000</code></li>
+                        </ul>
+                    ` 
+                },
+                { 
+                    id: 5, title: "Valid Parentheses", difficulty: "Easy", topic: "Stack", tags: ["String"], 
+                    description: `
+                        <p>Given a string <code>s</code> containing just the characters <code>'('</code>, <code>')'</code>, <code>'{'</code>, <code>'}'</code>, <code>'['</code> and <code>']'</code>, determine if the input string is valid.</p>
+                        <p>An input string is valid if:</p>
+                        <ol>
+                            <li>Open brackets must be closed by the same type of brackets.</li>
+                            <li>Open brackets must be closed in the correct order.</li>
+                        </ol>
+                        <h3>Example 1:</h3>
+                        <pre><code><strong>Input:</strong> s = "()[]{}""\n<strong>Output:</strong> true</code></pre>
+                        <h3>Example 2:</h3>
+                        <pre><code><strong>Input:</strong> s = "(]"\n<strong>Output:</strong> false</code></pre>
+                        <h3>Constraints:</h3>
+                        <ul><li><code>1 &lt;= s.length &lt;= 10^4</code></li><li><code>s</code> consists of parentheses only <code>'()[]{}'</code>.</li></ul>
+                    ` 
+                },
+                { 
+                    id: 6, title: "Merge Two Sorted Lists", difficulty: "Easy", topic: "Linked List", tags: ["Pointers"], 
+                    description: `
+                        <p>You are given the heads of two sorted linked lists <code>list1</code> and <code>list2</code>.</p>
+                        <p>Merge the two lists into a single <strong>sorted</strong> list. The list should be made by splicing together the nodes of the first two lists.</p>
+                        <p>Return <em>the head of the merged linked list</em>.</p>
+                        <h3>Example:</h3>
+                        <pre><code><strong>Input:</strong> list1 = [1,2,4], list2 = [1,3,4]\n<strong>Output:</strong> [1,1,2,3,4,4]</code></pre>
+                        <h3>Constraints:</h3>
+                        <ul>
+                            <li>The number of nodes in both lists is in the range <code>[0, 50]</code>.</li>
+                            <li><code>-100 &lt;= Node.val &lt;= 100</code></li>
+                            <li>Both <code>list1</code> and <code>list2</code> are sorted in non-decreasing order.</li>
+                        </ul>
+                    ` 
+                },
+                { 
+                    id: 7, title: "Validate Binary Search Tree", difficulty: "Medium", topic: "Tree", tags: ["DFS", "Recursion"], 
+                    description: `
+                        <p>Given the <code>root</code> of a binary tree, determine if it is a valid binary search tree (BST).</p>
+                        <p>A <strong>valid BST</strong> is defined as follows:</p>
+                        <ul>
+                            <li>The left subtree of a node contains only nodes with keys <strong>less than</strong> the node's key.</li>
+                            <li>The right subtree of a node contains only nodes with keys <strong>greater than</strong> the node's key.</li>
+                            <li>Both the left and right subtrees must also be binary search trees.</li>
+                        </ul>
+                        <h3>Example 1:</h3>
+                        <pre><code><strong>Input:</strong> root = [2,1,3]\n<strong>Output:</strong> true</code></pre>
+                        <h3>Example 2:</h3>
+                        <pre><code><strong>Input:</strong> root = [5,1,4,null,null,3,6]\n<strong>Output:</strong> false\n<strong>Explanation:</strong> The root node's value is 5 but its right child's value is 4.</code></pre>
+                        <h3>Constraints:</h3>
+                        <ul>
+                            <li>The number of nodes in the tree is in the range <code>[1, 10^4]</code>.</li>
+                            <li><code>-2^31 &lt;= Node.val &lt;= 2^31 - 1</code></li>
+                        </ul>
+                    ` 
+                },
+                { id: 8, title: "Number of Islands", difficulty: "Medium", topic: "Graph", tags: ["DFS", "BFS"], description: `<p>Given an <code>m x n</code> 2D binary grid <code>grid</code> which represents a map of <code>'1'</code>s (land) and <code>'0'</code>s (water), return <em>the number of islands</em>.</p><p>An <strong>island</strong> is surrounded by water and is formed by connecting adjacent lands horizontally or vertically. You may assume all four edges of the grid are all surrounded by water.</p><h3>Example:</h3><pre><code><strong>Input:</strong> grid = [\n  ["1","1","1","1","0"],\n  ["1","1","0","1","0"],\n  ["1","1","0","0","0"],\n  ["0","0","0","0","0"]\n]\n<strong>Output:</strong> 1</code></pre><h3>Constraints:</h3><ul><li><code>m == grid.length</code></li><li><code>n == grid[i].length</code></li><li><code>1 &lt;= m, n &lt;= 300</code></li><li><code>grid[i][j]</code> is <code>'0'</code> or <code>'1'</code>.</li></ul>` },
+                { id: 9, title: "Longest Substring Without Repeating Characters", difficulty: "Medium", topic: "String", tags: ["Sliding Window"], description: `<p>Given a string <code>s</code>, find the length of the <strong>longest substring</strong> without repeating characters.</p><h3>Example:</h3><pre><code><strong>Input:</strong> s = "abcabcbb"\n<strong>Output:</strong> 3\n<strong>Explanation:</strong> The answer is "abc", with the length of 3.</code></pre><h3>Constraints:</h3><ul><li><code>0 &lt;= s.length &lt;= 5 * 10^4</code></li><li><code>s</code> consists of English letters, digits, symbols and spaces.</li></ul>` },
+                { id: 10, title: "Coin Change", difficulty: "Medium", topic: "Dynamic Programming", tags: ["DP"], description: `<p>You are given an integer array <code>coins</code> representing coins of different denominations and an integer <code>amount</code> representing a total amount of money.</p><p>Return <em>the fewest number of coins that you need to make up that amount</em>. If that amount of money cannot be made up by any combination of the coins, return <code>-1</code>.</p><p>You may assume that you have an infinite number of each kind of coin.</p><h3>Example:</h3><pre><code><strong>Input:</strong> coins = [1,2,5], amount = 11\n<strong>Output:</strong> 3\n<strong>Explanation:</strong> 11 = 5 + 5 + 1</code></pre><h3>Constraints:</h3><ul><li><code>1 &lt;= coins.length &lt;= 12</code></li><li><code>1 &lt;= coins[i] &lt;= 2^31 - 1</code></li><li><code>0 &lt;= amount &lt;= 10^4</code></li></ul>` },
+                { id: 11, title: "Kth Smallest Element in a BST", difficulty: "Medium", topic: "Tree", tags: ["In-order Traversal"], description: `<p>Given the <code>root</code> of a binary search tree, and an integer <code>k</code>, return <em>the <code>k</code>th smallest value (1-indexed) of all the values of the nodes in the tree</em>.</p><h3>Example:</h3><pre><code><strong>Input:</strong> root = [3,1,4,null,2], k = 1\n<strong>Output:</strong> 1</code></pre><h3>Constraints:</h3><ul><li>The number of nodes in the tree is <code>n</code>.</li><li><code>1 &lt;= k &lt;= n &lt;= 10^4</code></li><li><code>0 &lt;= Node.val &lt;= 10^5</code></li></ul>` },
+                { id: 12, title: "Merge K Sorted Lists", difficulty: "Hard", topic: "Linked List", tags: ["Heap", "Priority Queue"], description: `<p>You are given an array of <code>k</code> linked-lists <code>lists</code>, each linked-list is sorted in ascending order.</p><p><em>Merge all the linked-lists into one sorted linked-list and return it.</em></p><h3>Example:</h3><pre><code><strong>Input:</strong> lists = [[1,4,5],[1,3,4],[2,6]]\n<strong>Output:</strong> [1,1,2,3,4,4,5,6]</code></pre><h3>Constraints:</h3><ul><li><code>k == lists.length</code></li><li><code>0 &lt;= k &lt;= 10^4</code></li><li><code>0 &lt;= lists[i].length &lt;= 500</code></li></ul>` },
+                { id: 13, title: "Trapping Rain Water", difficulty: "Hard", topic: "Array", tags: ["Two Pointers", "DP"], description: `<p>Given <code>n</code> non-negative integers representing an elevation map where the width of each bar is <code>1</code>, compute how much water it can trap after raining.</p><h3>Example:</h3><pre><code><strong>Input:</strong> height = [0,1,0,2,1,0,1,3,2,1,2,1]\n<strong>Output:</strong> 6</code></pre><h3>Constraints:</h3><ul><li><code>n == height.length</code></li><li><code>1 &lt;= n &lt;= 2 * 10^4</code></li></ul>` },
+                { id: 14, title: "Word Ladder", difficulty: "Hard", topic: "Graph", tags: ["BFS"], description: `<p>A <strong>transformation sequence</strong> from word <code>beginWord</code> to word <code>endWord</code> using a dictionary <code>wordList</code> is a sequence of words <code>beginWord -> s1 -> s2 -> ... -> sk</code> such that:</p><ul><li>Every adjacent pair of words differs by a single letter.</li><li>Every <code>si</code> for <code>1 &lt;= i &lt;= k</code> is in <code>wordList</code>. Note that <code>beginWord</code> does not need to be in <code>wordList</code>.</li><li><code>sk == endWord</code></li></ul><p>Given two words, <code>beginWord</code> and <code>endWord</code>, and a dictionary <code>wordList</code>, return <em>the number of words in the <strong>shortest transformation sequence</strong> from <code>beginWord</code> to <code>endWord</code>, or <code>0</code> if no such sequence exists.</em></p><h3>Example:</h3><pre><code><strong>Input:</strong> beginWord = "hit", endWord = "cog", wordList = ["hot","dot","dog","lot","log","cog"]\n<strong>Output:</strong> 5</code></pre><h3>Constraints:</h3><ul><li><code>1 &lt;= beginWord.length &lt;= 10</code></li><li><code>endWord.length == beginWord.length</code></li></ul>` },
+                { id: 15, title: "Regular Expression Matching", difficulty: "Hard", topic: "Dynamic Programming", tags: ["String", "Recursion"], description: `<p>Given an input string <code>s</code> and a pattern <code>p</code>, implement regular expression matching with support for <code>'.'</code> and <code>'*'</code>.</p><ul><li><code>'.'</code> Matches any single character.</li><li><code>'*'</code> Matches zero or more of the preceding element.</li></ul><p>The matching should cover the <strong>entire</strong> input string (not partial).</p><h3>Example:</h3><pre><code><strong>Input:</strong> s = "aa", p = "a*"\n<strong>Output:</strong> true</code></pre><h3>Constraints:</h3><ul><li><code>1 &lt;= s.length &lt;= 20</code></li><li><code>1 &lt;= p.length &lt;= 30</code></li></ul>` },
+                { id: 16, title: "Median of Two Sorted Arrays", difficulty: "Very Hard", topic: "Array", tags: ["Binary Search", "Divide and Conquer"], description: `<p>Given two sorted arrays <code>nums1</code> and <code>nums2</code> of size <code>m</code> and <code>n</code> respectively, return <strong>the median</strong> of the two sorted arrays.</p><p>The overall run time complexity should be <code>O(log (m+n))</code>.</p><h3>Example:</h3><pre><code><strong>Input:</strong> nums1 = [1,3], nums2 = [2]\n<strong>Output:</strong> 2.00000</code></pre><h3>Constraints:</h3><ul><li><code>nums1.length == m</code></li><li><code>nums2.length == n</code></li><li><code>0 &lt;= m, n &lt;= 1000</code></li></ul>` },
+                { id: 17, title: "N-Queens", difficulty: "Very Hard", topic: "Backtracking", tags: ["Recursion"], description: `<p>The <strong>n-queens</strong> puzzle is the problem of placing <code>n</code> queens on an <code>n x n</code> chessboard such that no two queens attack each other.</p><p>Given an integer <code>n</code>, return <em>all distinct solutions to the <strong>n-queens puzzle</strong></em>. You may return the answer in <strong>any order</strong>.</p><p>Each solution contains a distinct board configuration of the n-queens' placement, where <code>'Q'</code> and <code>'.'</code> both indicate a queen and an empty space, respectively.</p><h3>Example:</h3><pre><code><strong>Input:</strong> n = 4\n<strong>Output:</strong> [[".Q..","...Q","Q...","..Q."],["..Q.","Q...","...Q",".Q.."]]</code></pre><h3>Constraints:</h3><ul><li><code>1 &lt;= n &lt;= 9</code></li></ul>` },
+            ],
+            python: [
+                { id: 101, title: "Hello, Python", difficulty: "Very Easy", topic: "Python Basics", tags: ["Print"], description: `<p>Write a function that takes no arguments and returns the string <code>"Hello, Python"</code>.</p><h3>Example:</h3><pre><code><strong>Input:</strong> None\n<strong>Output:</strong> "Hello, Python"</code></pre><h3>Constraints:</h3><ul><li>This function must not take any inputs.</li></ul>` },
+                { id: 102, title: "Variable Swapping", difficulty: "Very Easy", topic: "Python Basics", tags: ["Variables"], description: `<p>Given two variables, <code>a</code> and <code>b</code>, swap their values and return them as a tuple in the order <code>(b, a)</code>. Use Python's tuple packing and unpacking feature.</p><h3>Example:</h3><pre><code><strong>Input:</strong> a = 5, b = 10\n<strong>Output:</strong> (10, 5)</code></pre><h3>Constraints:</h3><ul><li>The inputs <code>a</code> and <code>b</code> can be of any data type.</li></ul>` },
+                { id: 103, title: "List Comprehension for Squares", difficulty: "Easy", topic: "Lists", tags: ["Comprehension"], description: `<p>Given an integer <code>n</code>, create and return a list containing the squares of all integers from 1 up to and including <code>n</code>. You must use a list comprehension.</p><h3>Example:</h3><pre><code><strong>Input:</strong> n = 5\n<strong>Output:</strong> [1, 4, 9, 16, 25]</code></pre><h3>Constraints:</h3><ul><li><code>1 &lt;= n &lt;= 1000</code></li></ul>` },
+                { id: 104, title: "Count Vowels in a String", difficulty: "Easy", topic: "Strings", tags: ["Iteration"], description: `<p>Write a function that takes a string <code>s</code> and returns the number of vowels (a, e, i, o, u) it contains. The check should be case-insensitive.</p><h3>Example:</h3><pre><code><strong>Input:</strong> s = "Hello World"\n<strong>Output:</strong> 3</code></pre><h3>Constraints:</h3><ul><li><code>0 &lt;= len(s) &lt;= 1000</code></li></ul>` },
+                { id: 105, title: "Check for Palindrome", difficulty: "Easy", topic: "Strings", tags: ["Slicing"], description: `<p>Write a function that checks if a given string <code>s</code> is a palindrome. A palindrome is a word, phrase, number, or other sequence of characters that reads the same backward as forward.</p><p>Consider only alphanumeric characters and ignore cases.</p><h3>Example:</h3><pre><code><strong>Input:</strong> s = "A man, a plan, a canal: Panama"\n<strong>Output:</strong> true</code></pre><h3>Constraints:</h3><ul><li><code>1 &lt;= s.length &lt;= 2 * 10^5</code></li></ul>` },
+                { id: 106, title: "Group Anagrams", difficulty: "Medium", topic: "Dictionaries", tags: ["Hash Table"], description: `<p>Given an array of strings <code>strs</code>, group the <strong>anagrams</strong> together. You can return the answer in <strong>any order</strong>.</p><p>An <strong>Anagram</strong> is a word or phrase formed by rearranging the letters of a different word or phrase, typically using all the original letters exactly once.</p><h3>Example:</h3><pre><code><strong>Input:</strong> strs = ["eat","tea","tan","ate","nat","bat"]\n<strong>Output:</strong> [["bat"],["nat","tan"],["ate","eat","tea"]]</code></pre><h3>Constraints:</h3><ul><li><code>1 &lt;= strs.length &lt;= 10^4</code></li></ul>` },
+                { id: 107, title: "Implement a Decorator", difficulty: "Medium", topic: "Advanced Python", tags: ["Decorators", "Functions"], description: `<p>Create a decorator called <code>timer</code> that prints the execution time of the function it decorates. The decorator should work on a function that takes any arguments.</p><h3>Example Usage:</h3><pre><code>@timer\ndef my_function(n):\n    # some time-consuming operation\n    sum(x*x for x in range(n))\n\nmy_function(1000000)</code></pre><p><strong>Expected Output (will vary):</strong></p><pre><code>'my_function' executed in X.XXXXXXs</code></pre><h3>Constraints:</h3><ul><li>The decorator should not modify the return value of the decorated function.</li></ul>` },
+                { id: 108, title: "Flatten a Nested List", difficulty: "Medium", topic: "Lists", tags: ["Recursion", "Generators"], description: `<p>Write a function to flatten a nested list. The list can have any level of nesting.</p><h3>Example:</h3><pre><code><strong>Input:</strong> nested_list = [1, [2, 3], [4, [5, 6]]]\n<strong>Output:</strong> [1, 2, 3, 4, 5, 6]</code></pre><h3>Constraints:</h3><ul><li>The list contains only integers or other lists.</li></ul>` },
+                { id: 109, title: "Implement LRU Cache", difficulty: "Hard", topic: "Data Structures", tags: ["OrderedDict", "OOP"], description: `<p>Design a data structure that follows the constraints of a <strong>Least Recently Used (LRU) cache</strong>.</p><p>Implement the <code>LRUCache</code> class:</p><ul><li><code>LRUCache(int capacity)</code> Initialize the LRU cache with <strong>positive</strong> size <code>capacity</code>.</li><li><code>int get(int key)</code> Return the value of the <code>key</code> if the key exists, otherwise return <code>-1</code>.</li><li><code>void put(int key, int value)</code> Update the value of the <code>key</code> if the <code>key</code> exists. Otherwise, add the <code>key-value</code> pair to the cache. If the number of keys exceeds the <code>capacity</code> from this operation, <strong>evict</strong> the least recently used key.</li></ul><h3>Constraints:</h3><ul><li><code>1 &lt;= capacity &lt;= 3000</code></li></ul>` },
+                { id: 110, title: "Context Manager for File Handling", difficulty: "Hard", topic: "Advanced Python", tags: ["Context Managers", "OOP"], description: `<p>Implement a context manager class <code>ManagedFile</code> that mimics the behavior of Python's built-in <code>open()</code> function when used with a <code>with</code> statement. It should open a file on entering the context and automatically close it on exiting.</p><h3>Example Usage:</h3><pre><code>with ManagedFile('hello.txt', 'w') as f:\n    f.write('hello, world!')</code></pre><h3>Constraints:</h3><ul><li>The class should implement the <code>__enter__</code> and <code>__exit__</code> methods.</li></ul>` },
+                { id: 111, title: "Metaclass for Singleton Pattern", difficulty: "Very Hard", topic: "Advanced Python", tags: ["Metaclasses", "OOP"], description: `<p>Implement a Singleton design pattern using a metaclass. A Singleton ensures that a class has only one instance and provides a global point of access to it.</p><h3>Example Usage:</h3><pre><code>class MyClass(metaclass=Singleton):\n    pass\n\na = MyClass()\nb = MyClass()\n\nassert a is b # This should be True</code></pre><h3>Constraints:</h3><ul><li>You must use a metaclass to achieve the singleton behavior.</li></ul>` },
+            ],
+            java: [
+                { id: 201, title: "Hello, Java", difficulty: "Very Easy", topic: "Java Basics", tags: ["System.out"], description: `<p>Write a function that takes no arguments and returns the string <code>"Hello, Java"</code>.</p><h3>Example:</h3><pre><code><strong>Input:</strong> None\n<strong>Output:</strong> "Hello, Java"</code></pre><h3>Constraints:</h3><ul><li>This function must be public and static.</li></ul>` },
+                { id: 202, title: "Sum of Array Elements", difficulty: "Very Easy", topic: "Arrays", tags: ["Loops"], description: `<p>Given an array of integers <code>nums</code>, return the sum of all its elements.</p><h3>Example:</h3><pre><code><strong>Input:</strong> nums = {1, 2, 3, 4, 5}\n<strong>Output:</strong> 15</code></pre><h3>Constraints:</h3><ul><li><code>1 &lt;= nums.length &lt;= 1000</code></li><li><code>-1000 &lt;= nums[i] &lt;= 1000</code></li></ul>` },
+                { id: 203, title: "Reverse a String", difficulty: "Easy", topic: "Strings", tags: ["StringBuilder"], description: `<p>Given a string <code>s</code>, return a new string that is the reverse of the input string.</p><h3>Example:</h3><pre><code><strong>Input:</strong> s = "hello"\n<strong>Output:</strong> "olleh"</code></pre><h3>Constraints:</h3><ul><li><code>0 &lt;= s.length() &lt;= 500</code></li></ul>` },
+                { id: 204, title: "Find Factorial", difficulty: "Easy", topic: "Recursion", tags: ["Math"], description: `<p>Write a recursive function to calculate the factorial of a non-negative integer <code>n</code>.</p><h3>Example:</h3><pre><code><strong>Input:</strong> n = 5\n<strong>Output:</strong> 120</code></pre><h3>Constraints:</h3><ul><li><code>0 &lt;= n &lt;= 12</code></li></ul>` },
+                { id: 205, title: "Check for Prime Number", difficulty: "Easy", topic: "Math", tags: ["Loops"], description: `<p>Write a function that takes an integer <code>n</code> and returns <code>true</code> if it is a prime number, and <code>false</code> otherwise.</p><h3>Example:</h3><pre><code><strong>Input:</strong> n = 7\n<strong>Output:</strong> true</code></pre><h3>Constraints:</h3><ul><li><code>1 &lt;= n &lt;= 1000</code></li></ul>` },
+                { id: 206, title: "Sort a Map by Values", difficulty: "Medium", topic: "Collections", tags: ["Streams", "Lambda"], description: `<p>Given a <code>Map<String, Integer></code>, return a new <code>Map<String, Integer></code> that is sorted by its values in ascending order.</p><h3>Example:</h3><pre><code><strong>Input:</strong> map = {"A": 3, "B": 1, "C": 2}\n<strong>Output:</strong> {"B": 1, "C": 2, "A": 3}</code></pre><h3>Constraints:</h3><ul><li>The map can contain up to 1000 entries.</li></ul>` },
+                { id: 207, title: "Implement a Custom Generic List", difficulty: "Medium", topic: "Generics", tags: ["OOP"], description: `<p>Implement a simple generic list class, <code>MyList<E></code>, that supports <code>add(E element)</code> and <code>get(int index)</code> methods. It should handle dynamic resizing of its internal array.</p><h3>Constraints:</h3><ul><li>The list should not use any built-in Java Collection classes like ArrayList.</li></ul>` },
+                { id: 208, title: "Producer-Consumer Problem", difficulty: "Medium", topic: "Concurrency", tags: ["Threads", "BlockingQueue"], description: `<p>Implement a producer-consumer pattern using Java's <code>BlockingQueue</code>. Create two threads: one producer that adds items to the queue and one consumer that removes them.</p><h3>Constraints:</h3><ul><li>The simulation should handle a fixed number of items to produce and consume.</li></ul>` },
+                { id: 209, title: "Implement a Dependency Injection Container", difficulty: "Hard", topic: "Design Patterns", tags: ["Reflection", "OOP"], description: `<p>Create a basic dependency injection (DI) container. The container should be able to register classes and resolve instances, automatically injecting dependencies through constructors.</p><h3>Constraints:</h3><ul><li>Use Java Reflection to inspect constructors and create instances.</li></ul>` },
+                { id: 210, title: "Custom JSON Serializer", difficulty: "Hard", topic: "Reflection", tags: ["Annotations", "OOP"], description: `<p>Write a simple JSON serializer that can convert a Java object into a JSON string. Use reflection to access the object's fields. You can also add support for a custom annotation like <code>@JsonField(name = "customName")</code> to rename fields in the output.</p><h3>Constraints:</h3><ul><li>The serializer should handle basic types like String, int, and double.</li></ul>` },
+                { id: 211, title: "Build a Simple HTTP Server", difficulty: "Very Hard", topic: "Networking", tags: ["Sockets", "Threads"], description: `<p>Create a multi-threaded HTTP server in Java from scratch using the <code>java.net.Socket</code> and <code>java.net.ServerSocket</code> classes. The server should be able to handle simple GET requests for a file and return its content.</p><h3>Constraints:</h3><ul><li>The server should be able to handle multiple client connections simultaneously.</li></ul>` },
+            ],
+            job_kit: [],
+            competitive: []
+        };
+        
+        // This function will fill in the missing properties for brevity
+        function populateProblemPlaceholders() {
+            Object.values(problemSets).flat().forEach(p => {
+                p.description = p.description || `Solve the "${p.title}" problem. This is a classic question in the ${p.topic} category.`;
+                p.editorial = p.editorial || `The optimal solution for "${p.title}" involves using ${p.tags[0]}. A detailed step-by-step guide will be available soon.`;
+                p.functionName = p.functionName || `solve`;
+                p.testCases = p.testCases || [ { input: {}, expected: {} } ];
+                p.compareFunc = p.compareFunc || ((a,b) => JSON.stringify(a) === JSON.stringify(b));
+                p.template = p.template || {
+                    javascript: `function ${p.functionName || 'solve'}() {\n    // JS solution for ${p.title}\n}`,
+                    python: `class Solution:\n    def ${p.functionName || 'solve'}(self):\n        # Python solution for ${p.title}\n        pass`,
+                    java: `class Solution {\n    public void ${p.functionName || 'solve'}() {\n        // Java solution for ${p.title}\n    }\n}`
+                };
+            });
+        }
+        populateProblemPlaceholders();
+
+        const categories = [
+            { key: 'dsa', title: 'Practice DSA', description: 'Sharpen your core data structures and algorithms skills.', icon: '🧠' },
+            { key: 'python', title: 'Python Problems', description: 'Tackle challenges specific to Python\'s syntax and features.', icon: '🐍' },
+            { key: 'java', title: 'Java Problems', description: 'Solve problems using Java and its object-oriented nature.', icon: '☕' },
+            { key: 'job_kit', title: 'Job Ready Kit', description: 'Curated problems frequently asked in top tech interviews.', icon: '💼' },
+            { key: 'competitive', title: 'Competitive Programming', description: 'Challenge yourself with problems from programming contests.', icon: '🏆' },
+            { key: 'more', title: 'More coming soon...', description: 'New categories and problem sets are always on the way!', icon: '✨', disabled: true }
+        ];
+
+        // --- SIMULATED SOLUTIONS FOR PYTHON/JAVA ---
+        const solutions = {
+            javascript: { 3: true, 4: true, 5: true },
+            python: { 103: true, 105: true },
+            java: { 203: true, 205: true }
+        };
+
+        const smartHints = {
+            3: "Think about what information you need to store for each number as you iterate through the array. How can you quickly check if its 'complement' (i.e., `target - current_number`) has been seen before?",
+            4: "To reverse the list in place, you'll need to change the `next` pointer of each node. You'll probably need to keep track of three nodes at each step: the `previous`, the `current`, and the `next` one to avoid losing the rest of the list.",
+            5: "A stack is the perfect data structure for this problem. When you encounter an opening bracket, you can push it onto the stack. What should you check for when you encounter a closing bracket?",
+            12: "Solving this for just two lists is straightforward. To efficiently handle 'k' lists, consider a data structure that can always provide the smallest element among the current heads of all the lists.",
+            16: "This is a classic binary search problem, but you're not searching for a value. Instead, try to binary search for the correct 'partition point' in the smaller array. This partition will help divide all elements from both arrays into two halves."
+        };
+
+        // --- STATE MANAGEMENT ---
+        let currentProblem = null;
+        let editor;
+        let progressChart;
+        let userStats = { solved: new Set(), easy: 0, medium: 0, hard: 0, byTopic: {} };
+
+        // --- UI INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            initEditor();
+            renderHomeView();
+            setupEventListeners();
+            loadUserStats();
+            initResizers();
+        });
+
+        // --- HOME & NAVIGATION ---
+        function renderHomeView() {
+            const grid = document.getElementById('category-grid');
+            grid.innerHTML = '';
+            categories.forEach(cat => {
+                const card = document.createElement('div');
+                card.className = `category-card p-6 rounded-lg cursor-pointer flex flex-col items-start ${cat.disabled ? 'opacity-50 cursor-not-allowed' : ''}`;
+                card.style.backgroundColor = 'var(--panel)';
+                card.innerHTML = `
+                    <div class="text-4xl mb-3">${cat.icon}</div>
+                    <h3 class="text-xl font-semibold">${cat.title}</h3>
+                    <p class="mt-1 text-sm flex-grow" style="color: var(--text-secondary);">${cat.description}</p>
+                `;
+                if (!cat.disabled) {
+                    card.onclick = () => showProblemView(cat.key, cat.title);
+                }
+                grid.appendChild(card);
+            });
+        }
+
+        function showProblemView(categoryKey, categoryTitle) {
+            document.getElementById('home-view').style.display = 'none';
+            document.getElementById('problem-view').style.display = 'flex';
+            document.getElementById('problem-set-title').textContent = categoryTitle;
+            displayProblems(categoryKey);
+        }
+
+        function showHomeView() {
+            document.getElementById('problem-view').style.display = 'none';
+            document.getElementById('main-content').style.display = 'none';
+            document.getElementById('home-view').style.display = 'block';
+            currentProblem = null; // Clear current problem state
+        }
+        
+        // --- THEME ---
+        function initTheme() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const sunIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+            const moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+            
+            const setTheme = (theme) => {
+                document.body.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+                themeToggle.innerHTML = theme === 'dark' ? sunIcon : moonIcon;
+                if (editor) monaco.editor.setTheme(theme === 'dark' ? 'vs-dark' : 'vs');
+            };
+
+            themeToggle.addEventListener('click', () => {
+                const newTheme = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                setTheme(newTheme);
+            });
+            setTheme(localStorage.getItem('theme') || 'dark');
+        }
+
+        // --- EDITOR ---
+        function initEditor() {
+            require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
+            require(['vs/editor/editor.main'], () => {
+                editor = monaco.editor.create(document.getElementById('editor-container'), {
+                    language: 'javascript',
+                    theme: document.body.getAttribute('data-theme') === 'dark' ? 'vs-dark' : 'vs',
+                    automaticLayout: true,
+                    fontSize: 14,
+                    fontFamily: 'JetBrains Mono',
+                    fontLigatures: true,
+                    minimap: { enabled: false },
+                    scrollBeyondLastLine: false,
+                    wordWrap: 'on',
+                    padding: { top: 16 }
+                });
+
+                const placeholder = document.querySelector('.monaco-placeholder');
+                editor.onDidChangeModelContent(() => {
+                    placeholder.style.display = editor.getValue() === '' ? 'block' : 'none';
+                });
+                placeholder.textContent = '// Your code here...';
+            });
+        }
+
+        // --- UI RENDERING & LOGIC ---
+        function displayProblems(categoryKey) {
+            const problems = problemSets[categoryKey] || [];
+            const list = document.getElementById('problems-list');
+            list.innerHTML = '';
+
+            if(problems.length === 0) {
+                list.innerHTML = `<div class="p-3 text-sm" style="color: var(--text-secondary);">No problems in this category yet.</div>`;
+                return;
+            }
+
+            problems.forEach(p => {
+                const isSolved = userStats.solved.has(p.id);
+                const difficultyColor = { 
+                    "Very Easy": 'text-cyan-400', 
+                    "Easy": 'text-green-500', 
+                    "Medium": 'text-yellow-500', 
+                    "Hard": 'text-red-500',
+                    "Very Hard": 'text-fuchsia-500'
+                }[p.difficulty];
+
+                const card = document.createElement('div');
+                card.className = 'problem-card p-3 mb-2 border-l-4 rounded-md cursor-pointer transition';
+                card.style.borderColor = 'transparent';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="font-medium">${p.title}</span>
+                        ${isSolved ? `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>` : ''}
+                    </div>
+                    <div class="text-sm mt-1 flex items-center gap-2" style="color: var(--text-secondary);">
+                        <span class="${difficultyColor}">${p.difficulty}</span>
+                        <span>•</span>
+                        <span>${p.topic}</span>
+                    </div>`;
+                card.onclick = () => showProblem(p, card);
+                list.appendChild(card);
+            });
+        }
+        
+        function showProblem(problem, clickedCard) {
+            const allCards = document.querySelectorAll('#problems-list .problem-card');
+            allCards.forEach(card => card.classList.remove('active'));
+            if (clickedCard) {
+                clickedCard.classList.add('active');
+            }
+            
+            currentProblem = problem;
+            document.getElementById('main-content').style.display = 'flex';
+            document.getElementById('problem-title').textContent = problem.title;
+
+            const languages = ['javascript', 'python', 'java'];
+            languages.forEach(lang => {
+                if (!problem.template[lang]) {
+                    problem.template[lang] = `// ${lang.charAt(0).toUpperCase() + lang.slice(1)} solution for "${problem.title}" is not available in this demo.`;
+                }
+            });
+
+            const currentLang = document.getElementById('language-select').value;
+            if (editor) {
+                monaco.editor.setModelLanguage(editor.getModel(), currentLang);
+                editor.setValue(problem.template[currentLang]);
+            }
+            
+            document.getElementById('problem-description').innerHTML = problem.description || `<p>Description for ${problem.title} is not available.</p>`;
+            document.getElementById('editorial-content').innerHTML = problem.editorial || `<p>Editorial for ${problem.title} is not available.</p>`;
+            
+            document.getElementById('ai-hint-box').style.display = 'none';
+            document.getElementById('output-panel').innerHTML = '';
+            switchTab('description');
+        }
+
+
+        function setupEventListeners() {
+            document.getElementById('back-to-home').addEventListener('click', showHomeView);
+
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+            });
+            document.getElementById('language-select').addEventListener('change', (e) => {
+                if (editor) {
+                    monaco.editor.setModelLanguage(editor.getModel(), e.target.value);
+                }
+                if (currentProblem) {
+                    editor.setValue(currentProblem.template[e.target.value]);
+                }
+            });
+            document.getElementById('submit-btn').addEventListener('click', () => validateCode(true));
+            document.getElementById('run-btn').addEventListener('click', () => validateCode(false));
+            document.getElementById('ai-hint-btn').addEventListener('click', getAIHint);
+            document.getElementById('output-panel-toggle').addEventListener('click', toggleOutputPanel);
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                if (currentProblem && editor) {
+                    const currentLang = document.getElementById('language-select').value;
+                    editor.setValue(currentProblem.template[currentLang]);
+                }
+            });
+        }
+
+        function switchTab(tabName) {
+            const problemContentWrapper = document.getElementById('problem-content-wrapper');
+            const profileSection = document.getElementById('profile-section');
+            const contentResizer = document.getElementById('content-resizer');
+            const editorPanel = document.getElementById('editor-panel');
+
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab[data-tab="${tabName}"]`).classList.add('active');
+
+            if (tabName === 'profile') {
+                problemContentWrapper.style.display = 'none';
+                contentResizer.style.display = 'none';
+                editorPanel.style.display = 'none';
+                profileSection.classList.remove('hidden');
+                profileSection.style.width = '100%';
+                renderProgressChart();
+            } else {
+                problemContentWrapper.style.display = 'flex';
+                contentResizer.style.display = 'block';
+                editorPanel.style.display = 'flex';
+                profileSection.style.width = '0';
+                
+                document.getElementById(`${tabName}-section`).classList.remove('hidden');
+            }
+        }
+        function toggleOutputPanel() {
+            const panel = document.getElementById('output-panel');
+            const editorSection = document.getElementById('editor-section');
+            const arrow = document.getElementById('output-arrow');
+            
+            if (panel.clientHeight === 0) { // Check if panel is collapsed
+                panel.style.height = '8rem'; // h-32
+                editorSection.style.height = 'calc(100% - 8rem)';
+                arrow.classList.remove('rotate-180');
+            } else {
+                panel.style.height = '0';
+                editorSection.style.height = '100%';
+                arrow.classList.add('rotate-180');
+            }
+        }
+        
+        function initResizers() {
+            const createResizer = (resizerEl, leftEl, rightEl, minLeft = 250, minRight = 300) => {
+                let isResizing = false;
+
+                resizerEl.addEventListener('mousedown', (e) => {
+                    isResizing = true;
+                    resizerEl.classList.add('active');
+                    document.body.style.cursor = 'col-resize';
+                    document.body.style.userSelect = 'none';
+                });
+
+                document.addEventListener('mousemove', (e) => {
+                    if (!isResizing) return;
+                    const container = resizerEl.parentElement;
+                    const totalWidth = container.offsetWidth;
+                    const newLeftWidth = e.clientX - container.getBoundingClientRect().left;
+
+                    if (newLeftWidth > minLeft && totalWidth - newLeftWidth > minRight) {
+                        const newLeftPercent = (newLeftWidth / totalWidth) * 100;
+                        leftEl.style.width = `${newLeftPercent}%`;
+                        rightEl.style.width = `${100 - newLeftPercent}%`;
+                    }
+                });
+
+                document.addEventListener('mouseup', () => {
+                    isResizing = false;
+                    resizerEl.classList.remove('active');
+                    document.body.style.cursor = 'default';
+                    document.body.style.userSelect = 'auto';
+                });
+            };
+
+            createResizer(
+                document.getElementById('sidebar-resizer'),
+                document.getElementById('sidebar'),
+                document.getElementById('main-content')
+            );
+            
+            createResizer(
+                document.getElementById('content-resizer'),
+                document.getElementById('problem-content-wrapper'),
+                document.getElementById('editor-panel'),
+                300, 400
+            );
+        }
+
+        async function validateCode(isSubmission) {
+            if (!currentProblem) return;
+            const userCode = editor.getValue();
+            const lang = document.getElementById('language-select').value;
+            const outputDiv = document.getElementById('output-panel');
+            outputDiv.innerHTML = `<div style="color: var(--text-secondary);">Running test cases...</div>`;
+            
+            if (lang !== 'javascript') {
+                 outputDiv.innerHTML = `<div class="font-bold text-yellow-500">Execution for Python/Java is simulated.</div>`;
+                 setTimeout(() => {
+                    if (solutions[lang] && solutions[lang][currentProblem.id]) {
+                         outputDiv.innerHTML += `<div class="font-bold mt-2 text-green-400">All tests passed! (Simulated)</div>`;
+                         if (isSubmission) handleSuccessfulSubmission();
+                    } else {
+                         outputDiv.innerHTML += `<div class="font-bold mt-2 text-red-400">1/1 tests failed. (Simulated)</div>`;
+                    }
+                }, 500);
+                return;
+            }
+
+            // Real JS Execution
+            let passedCount = 0;
+            let resultsHTML = '';
+            
+            // NOTE: Using new Function() is insecure for production. A real platform uses a secure, isolated sandbox.
+            try {
+                const userFunc = new Function('ListNode', 'TreeNode', `return ${userCode}`)(ListNode, TreeNode);
+
+                for (const [index, testCase] of currentProblem.testCases.entries()) {
+                    const inputClone = JSON.parse(JSON.stringify(testCase.input));
+                    let args = Object.values(inputClone);
+
+                    if(currentProblem.topic === 'Linked List') args[0] = buildLinkedList(args[0]);
+                    if(currentProblem.topic === 'Tree') args[0] = buildTree(args[0]);
+                    
+                    const result = await runWithTimeout(userFunc, args, 2000);
+
+                    let processedOutput = result.output;
+                    if(currentProblem.topic === 'Linked List') processedOutput = linkedListToArray(result.output);
+                    
+                    if (result.error) {
+                        resultsHTML += `<div class="text-red-400"><b>Test Case ${index + 1}:</b> ${result.error}</div>`;
+                    } else if (currentProblem.compareFunc(processedOutput, testCase.expected)) {
+                        passedCount++;
+                        resultsHTML += `<div class="text-green-400"><b>Test Case ${index + 1}:</b> ✅ Passed</div>`;
+                    } else {
+                        resultsHTML += `<div class="text-red-400">
+                            <b>Test Case ${index + 1}:</b> ❌ Failed
+                            <div class="text-xs pl-4" style="color: var(--text-secondary);">
+                                <b>Input:</b> ${JSON.stringify(testCase.input)}<br/>
+                                <b>Expected:</b> ${JSON.stringify(testCase.expected)}<br/>
+                                <b>Got:</b> ${JSON.stringify(processedOutput)}
+                            </div>
+                        </div>`;
+                    }
+                }
+            } catch (e) {
+                resultsHTML = `<div class="text-red-400"><b>Syntax Error:</b> ${e.message}</div>`;
+            }
+
+            outputDiv.innerHTML = resultsHTML;
+            
+            const allPassed = passedCount === currentProblem.testCases.length;
+            outputDiv.innerHTML += `<div class="font-bold mt-2 ${allPassed ? 'text-green-400' : 'text-red-400'}">
+                ${passedCount}/${currentProblem.testCases.length} test cases passed.
+            </div>`;
+
+            if (isSubmission && allPassed) {
+                handleSuccessfulSubmission();
+            }
+        }
+
+        function runWithTimeout(func, args, timeout) {
+             const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Time Limit Exceeded')), timeout)
+            );
+            
+            const executionPromise = new Promise(res => {
+                try {
+                    const output = func(...args);
+                    res({ output });
+                } catch(e) {
+                    res({ error: e.message });
+                }
+            });
+
+            return Promise.race([executionPromise, timeoutPromise])
+                .catch(err => ({ error: err.message }));
+        }
+        
+        async function getAIHint() {
+            const hintBox = document.getElementById('ai-hint-box');
+            hintBox.style.display = 'block';
+            hintBox.innerHTML = '✨ Generating AI hint...';
+            
+            await new Promise(res => setTimeout(res, 1000)); 
+
+            const aiResponse = smartHints[currentProblem.id] || "This problem is a good test of fundamentals. Try to break it down into the smallest possible steps first.";
+            hintBox.innerHTML = aiResponse;
+        }
+        function handleSuccessfulSubmission() {
+            if (!currentProblem || userStats.solved.has(currentProblem.id)) return;
+            
+            userStats.solved.add(currentProblem.id);
+            const diff = currentProblem.difficulty.toLowerCase().replace(' ', '');
+            userStats[diff] = (userStats[diff] || 0) + 1;
+            userStats.byTopic[currentProblem.topic] = (userStats.byTopic[currentProblem.topic] || 0) + 1;
+            
+            saveUserStats();
+            updateProfileStats();
+            
+            const currentCategoryTitle = document.getElementById('problem-set-title').textContent;
+            const currentCategory = categories.find(c => c.title === currentCategoryTitle)?.key;
+            if (currentCategory) {
+                displayProblems(currentCategory);
+            }
+             
+            triggerConfetti();
+        }
+        function saveUserStats() {
+            const statsToSave = { ...userStats, solved: Array.from(userStats.solved) };
+            localStorage.setItem('userStats', JSON.stringify(statsToSave));
+        }
+        function loadUserStats() {
+            const savedStats = JSON.parse(localStorage.getItem('userStats'));
+            if (savedStats) {
+                userStats = { ...savedStats, solved: new Set(savedStats.solved) };
+            }
+            updateProfileStats();
+        }
+        function updateProfileStats() {
+            document.getElementById('total-solved').textContent = userStats.solved.size;
+            document.getElementById('easy-solved').textContent = (userStats.easy || 0) + (userStats.veryeasy || 0);
+            document.getElementById('medium-solved').textContent = userStats.medium || 0;
+        }
+        function renderProgressChart() {
+            const ctx = document.getElementById('progress-chart').getContext('2d');
+            if (progressChart) progressChart.destroy();
+            
+            progressChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(userStats.byTopic),
+                    datasets: [{
+                        label: 'Problems Solved by Topic',
+                        data: Object.values(userStats.byTopic),
+                        backgroundColor: 'rgba(204, 204, 204, 0.5)',
+                        borderColor: 'rgba(204, 204, 204, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1, color: 'var(--text-secondary)' } }, x: { ticks: { color: 'var(--text-secondary)'} } },
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: 'var(--text-secondary)' } } }
+                }
+            });
+        }
+        function triggerConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            let particles = [];
+            const particleCount = 200;
+            const colors = ["#cccccc", "#ffffff", "#999999"];
+
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    vx: Math.random() * 10 - 5,
+                    vy: Math.random() * 5 + 2,
+                    radius: Math.random() * 3 + 2,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    alpha: 1
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach((p, index) => {
+                    p.y += p.vy;
+                    p.x += p.vx;
+                    p.alpha -= 0.01;
+                    
+                    if (p.alpha <= 0) particles.splice(index, 1);
+
+                    ctx.globalAlpha = p.alpha;
+                    ctx.beginPath();
+                    ctx.fillStyle = p.color;
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                
+                if(particles.length > 0) requestAnimationFrame(animate);
+            }
+            animate();
+        }
+        function ListNode(val, next) { this.val = val === undefined ? 0 : val; this.next = next === undefined ? null : next; }
+        function TreeNode(val, left, right) { this.val = val === undefined ? 0 : val; this.left = left === undefined ? null : left; this.right = right === undefined ? null : right; }
+        function buildLinkedList(arr) { if(!arr || !arr.length) return null; let h = new ListNode(arr[0]), c = h; for(let i=1;i<arr.length;i++){c.next=new ListNode(arr[i]); c=c.next;} return h;}
+        function linkedListToArray(h){let a=[];while(h){a.push(h.val);h=h.next}return a}
+        function buildTree(arr) { if(!arr || !arr.length) return null; let r = new TreeNode(arr[0]), q=[r], i=1; while(q.length&&i<arr.length){let c=q.shift();if(i<arr.length&&arr[i]!=null){c.left=new TreeNode(arr[i]); q.push(c.left)}i++; if(i<arr.length&&arr[i]!=null){c.right=new TreeNode(arr[i]); q.push(c.right)}i++}return r}
+    </script>
+</body>
+</html>
+
